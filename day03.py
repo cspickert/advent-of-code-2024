@@ -3,18 +3,39 @@ import re
 
 
 def part1(data):
-    return sum(a * b for a, b in data)
+    result = 0
+    for item in data:
+        match item:
+            case ("mul", a, b):
+                result += a * b
+    return result
 
 
 def part2(data):
-    pass
+    do = True
+    result = 0
+    for item in data:
+        match item:
+            case ("do",):
+                do = True
+            case ("don't",):
+                do = False
+            case ("mul", a, b):
+                if do:
+                    result += a * b
+    return result
 
 
 def parse_data(input_file):
-    matches = re.findall(r"mul\(((\d{1,3}),(\d{1,3}))\)", input_file.read())
+    matches = re.findall(
+        r"(mul|do|don't)\((?:((\d{1,3}),(\d{1,3}))?)\)", input_file.read()
+    )
     data = []
-    for _, lhs, rhs in matches:
-        data.append((int(lhs), int(rhs)))
+    for ins, _, lhs, rhs in matches:
+        if ins == "mul":
+            data.append((ins, int(lhs), int(rhs)))
+        else:
+            data.append((ins,))
     return data
 
 
