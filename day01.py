@@ -12,7 +12,7 @@ def part1(data):
 def part2(data):
     left, right = data
     right_count = Counter(right)
-    return sum(a * right_count[a] for a in left) 
+    return sum(a * right_count[a] for a in left)
 
 
 def parse_data(input_file):
