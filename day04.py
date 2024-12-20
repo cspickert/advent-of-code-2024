@@ -6,7 +6,7 @@ def part1(data):
 
 
 def part2(data):
-    pass
+    return find_all_patterns(data, ["M.S", ".A.", "M.S"])
 
 
 def find_all_words(data, word):
@@ -41,6 +41,51 @@ def get_adj_coords(data, row, col, direction):
     next_row, next_col = row + dr, col + dc
     if 0 <= next_row < len(data) and 0 <= next_col < len(data[next_row]):
         yield next_row, next_col
+
+
+def find_all_patterns(data, pattern):
+    result = 0
+    for rotation in get_all_pattern_rotations(pattern):
+        result += find_pattern(data, rotation)
+    return result
+
+
+def find_pattern(data, pattern):
+    result = 0
+    for row in range(len(data)):
+        for col in range(len(data[row])):
+            if check_region(data, pattern, row, col):
+                result += 1
+    return result
+
+
+def get_all_pattern_rotations(pattern):
+    yield pattern
+
+    for _ in range(len(pattern)):
+        rotated_cols = ["".join(reversed(row)) for row in pattern]
+        rotated_rows = [
+            "".join(col[i] for col in rotated_cols) for i in range(len(rotated_cols))
+        ]
+        yield rotated_rows
+        pattern = rotated_rows
+
+
+def check_region(data, pattern, row, col):
+    pattern_dim = len(pattern)
+    data_rows = data[row : row + pattern_dim]
+    if len(data_rows) < pattern_dim:
+        return False
+    for data_row, pattern_cols in zip(data_rows, pattern):
+        data_cols = data_row[col : col + pattern_dim]
+        if len(data_cols) < pattern_dim:
+            return False
+        for data_col, pattern_col in zip(data_cols, pattern_cols):
+            if pattern_col == ".":
+                continue
+            if data_col != pattern_col:
+                return False
+    return True
 
 
 def parse_data(input_file):
