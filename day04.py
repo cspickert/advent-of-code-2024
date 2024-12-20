@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 
 def part1(data):
@@ -78,13 +79,8 @@ def check_region(data, pattern, row, col):
         return False
     for data_row, pattern_cols in zip(data_rows, pattern):
         data_cols = data_row[col : col + pattern_dim]
-        if len(data_cols) < pattern_dim:
+        if not re.match(pattern_cols, data_cols):
             return False
-        for data_col, pattern_col in zip(data_cols, pattern_cols):
-            if pattern_col == ".":
-                continue
-            if data_col != pattern_col:
-                return False
     return True
 
 
