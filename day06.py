@@ -1,21 +1,36 @@
 from pathlib import Path
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import cached_property
 
 
 def part1(data):
-    return data.simulate()
+    data.simulate()
+    return len(data.visited_coords)
 
 
 def part2(data):
     pass
 
 
+@dataclass(frozen=True)
+class Position:
+    start: tuple[int, int] = (0, 0)
+    direction: tuple[int, int] = (0, 0)
+
+    def move_forward(self):
+        dr, dc = self.direction
+        row, col = self.start
+        next_row, next_col = row + dr, col + dc
+        return replace(self, start=(next_row, next_col))
+
+    def pivot(self):
+        return replace(self, direction=get_next_direction(self.direction))
+
+
 @dataclass
 class State:
     obstacles: set[tuple[int, int]] = field(default_factory=set)
-    start: tuple[int, int] = (0, 0)
-    direction: tuple[int, int] = (0, 0)
+    position: Position = Position()
     visited: set[tuple[int, int]] = field(default_factory=set)
 
     @cached_property
@@ -32,22 +47,32 @@ class State:
 
     @property
     def is_in_bounds(self):
-        row, col = self.start
+        row, col = self.position.start
         min_row, min_col = self.min_coords
         max_row, max_col = self.max_coords
         return min_row <= row <= max_row and min_col <= col <= max_col
 
+    @property
+    def visited_coords(self):
+        return {position.start for position in self.visited}
+
+    def move_forward(self):
+        dr, dc = self.position.direction
+        row, col = self.position.start
+        next_row, next_col = row + dr, col + dc
+        if (next_row, next_col) not in self.obstacles:
+            self.position = self.position.move_forward()
+            return True
+        return False
+
+    def pivot(self):
+        self.position = self.position.pivot()
+
     def simulate(self):
         while self.is_in_bounds:
-            self.visited.add(self.start)
-            dr, dc = self.direction
-            row, col = self.start
-            next_row, next_col = row + dr, col + dc
-            if (next_row, next_col) in self.obstacles:
-                self.direction = get_next_direction(self.direction)
-            else:
-                self.start = (next_row, next_col)
-        return len(self.visited)
+            self.visited.add(self.position)
+            if not self.move_forward():
+                self.pivot()
 
 
 def parse_data(input_file):
@@ -60,9 +85,10 @@ def parse_data(input_file):
                 case "#":
                     data.obstacles.add((row, col))
                 case direction if direction in ("^", "<", "v", ">"):
-                    data.direction = parse_direction(direction)
-                    data.start = (row, col)
-                    data.visited.add(data.start)
+                    direction = parse_direction(direction)
+                    start = (row, col)
+                    data.position = Position(start, direction)
+                    data.visited.add(data.position)
     return data
 
 
