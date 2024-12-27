@@ -9,7 +9,8 @@ def part1(data):
 
 
 def part2(data):
-    pass
+    data.simulate()
+    return len(data.added_obstacles)
 
 
 @dataclass(frozen=True)
@@ -27,11 +28,18 @@ class Position:
         return replace(self, direction=get_next_direction(self.direction))
 
 
+class LoopDetected(Exception):
+    pass
+
+
 @dataclass
 class State:
     obstacles: set[tuple[int, int]] = field(default_factory=set)
+    start_position: Position = Position()
     position: Position = Position()
     visited: set[tuple[int, int]] = field(default_factory=set)
+    added_obstacles: set[tuple[int, int]] = field(default_factory=set)
+    try_add_obstacles: bool = False
 
     @cached_property
     def min_coords(self):
@@ -68,15 +76,35 @@ class State:
     def pivot(self):
         self.position = self.position.pivot()
 
+    def try_adding_obstacle(self):
+        if not self.try_add_obstacles:
+            return
+        state = State(
+            set(self.obstacles),
+            self.start_position,
+            self.start_position,
+        )
+        obstacle = self.position.start
+        if obstacle not in state.obstacles:
+            state.obstacles.add(obstacle)
+            try:
+                state.simulate()
+            except LoopDetected:
+                self.added_obstacles.add(obstacle)
+
     def simulate(self):
         while self.is_in_bounds:
+            if self.position in self.visited:
+                raise LoopDetected
             self.visited.add(self.position)
+            if len(self.visited) > 0:
+                self.try_adding_obstacle()
             if not self.move_forward():
                 self.pivot()
 
 
 def parse_data(input_file):
-    data = State()
+    data = State(try_add_obstacles=True)
     for row, line in enumerate(input_file.readlines()):
         for col, char in enumerate(line):
             match char:
@@ -87,8 +115,7 @@ def parse_data(input_file):
                 case direction if direction in ("^", "<", "v", ">"):
                     direction = parse_direction(direction)
                     start = (row, col)
-                    data.position = Position(start, direction)
-                    data.visited.add(data.position)
+                    data.start_position = data.position = Position(start, direction)
     return data
 
 
