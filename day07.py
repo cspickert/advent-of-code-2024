@@ -2,27 +2,33 @@ from pathlib import Path
 
 
 def part1(data):
-    return sum(item[0] for item in data if find_solution(item))
+    return sum(item[0] for item in data if find_solution(["+", "*"], item))
 
 
 def part2(data):
-    pass
+    return sum(item[0] for item in data if find_solution(["+", "*", "||"], item))
 
 
-def find_solution(item):
+def find_solution(ops, item):
     result, args = item
-    return find_solution_helper(result, args[0], args[1:])
+    return find_solution_helper(ops, result, args[0], args[1:])
 
 
-def find_solution_helper(result, accum, args):
+def find_solution_helper(ops, result, accum, args):
     if accum == result:
         return True
     if accum > result or not args:
         return False
-    if find_solution_helper(result, accum + args[0], args[1:]):
-        return True
-    if find_solution_helper(result, accum * args[0], args[1:]):
-        return True
+    for op in ops:
+        match op:
+            case "+":
+                next_accum = accum + args[0]
+            case "*":
+                next_accum = accum * args[0]
+            case "||":
+                next_accum = int(str(accum) + str(args[0]))
+        if find_solution_helper(ops, result, next_accum, args[1:]):
+            return True
     return False
 
 
