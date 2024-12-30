@@ -1,12 +1,15 @@
 from pathlib import Path
+from functools import partial
 
 
 def part1(data):
-    return sum(item[0] for item in data if find_solution(["+", "*"], item))
+    is_valid = partial(find_solution, ["+", "*"])
+    return sum(item[0] for item in data if is_valid(item))
 
 
 def part2(data):
-    return sum(item[0] for item in data if find_solution(["+", "*", "||"], item))
+    is_valid = partial(find_solution, ["+", "*", "||"])
+    return sum(item[0] for item in data if is_valid(item))
 
 
 def find_solution(ops, item):
