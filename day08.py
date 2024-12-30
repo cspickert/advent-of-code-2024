@@ -5,27 +5,49 @@ from itertools import combinations
 
 def part1(data):
     nodes, bounds = data
-    antinodes = set()
-    for node in nodes:
-        for loc1, loc2 in combinations(nodes[node], 2):
-            for antinode_loc in get_antinode_locations(loc1, loc2):
-                if is_in_bounds(antinode_loc, bounds):
-                    antinodes.add(antinode_loc)
+    antinodes = get_all_antinode_locations(nodes, bounds, repeat=False)
     return len(antinodes)
 
 
 def part2(data):
-    pass
+    nodes, bounds = data
+    antinodes = get_all_antinode_locations(nodes, bounds, repeat=True)
+    return len(antinodes)
 
 
-def get_antinode_locations(loc1, loc2):
-    result = []
+def get_all_antinode_locations(nodes, bounds, repeat):
+    antinodes = set()
+    for node in nodes:
+        for loc1, loc2 in combinations(nodes[node], 2):
+            antinodes.update(get_antinode_locations(loc1, loc2, bounds, repeat))
+    return antinodes
+
+
+def get_antinode_locations(loc1, loc2, bounds, repeat):
+    result = set()
     r1, c1 = loc1
     r2, c2 = loc2
     dr = r2 - r1
     dc = c2 - c1
-    result.append((r1 - dr, c1 - dc))
-    result.append((r2 + dr, c2 + dc))
+    if repeat:
+        result.add(loc1)
+        result.add(loc2)
+    while True:
+        anti_loc1 = (r1 - dr, c1 - dc)
+        if not is_in_bounds(anti_loc1, bounds):
+            break
+        result.add(anti_loc1)
+        if not repeat:
+            break
+        r1, c1 = anti_loc1
+    while True:
+        anti_loc2 = (r2 + dr, c2 + dc)
+        if not is_in_bounds(anti_loc2, bounds):
+            break
+        result.add(anti_loc2)
+        if not repeat:
+            break
+        r2, c2 = anti_loc2
     return result
 
 

@@ -29,6 +29,5 @@ def test_part1(example_input):
 
 
 def test_part2(example_input):
-    # data = parse_data(example_input)
-    # assert part2(data) == 4
-    pass
+    data = parse_data(example_input)
+    assert part2(data) == 34
