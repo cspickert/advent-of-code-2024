@@ -3,15 +3,13 @@ from copy import deepcopy
 
 
 def part1(data):
-    return sum(get_cost(region) for region in find_regions(data))
+    return sum(
+        get_area(region) * get_perimeter(region) for region in find_regions(data)
+    )
 
 
 def part2(data):
-    pass
-
-
-def get_cost(region):
-    return get_area(region) * get_perimeter(region)
+    return sum(get_area(region) * get_sides(region) for region in find_regions(data))
 
 
 def get_area(region):
@@ -27,6 +25,38 @@ def get_perimeter(region):
                 perimeter -= 1
         result += perimeter
     return result
+
+
+def get_sides(region):
+    top, left, bottom, right = set(), set(), set(), set()
+    for row, col in region:
+        # top
+        if (row - 1, col) not in region:
+            top.add((row, col))
+        # left
+        if (row, col - 1) not in region:
+            left.add((row, col))
+        # bottom
+        if (row + 1, col) not in region:
+            bottom.add((row, col))
+        # right
+        if (row, col + 1) not in region:
+            right.add((row, col))
+
+    top_count, left_count, bottom_count, right_count = 0, 0, 0, 0
+    for row, col in top:
+        if (row, col - 1) not in top:
+            top_count += 1
+    for row, col in left:
+        if (row - 1, col) not in left:
+            left_count += 1
+    for row, col in right:
+        if (row - 1, col) not in right:
+            right_count += 1
+    for row, col in bottom:
+        if (row, col - 1) not in bottom:
+            bottom_count += 1
+    return top_count + left_count + bottom_count + right_count
 
 
 def find_regions(data):
