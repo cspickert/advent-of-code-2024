@@ -1,4 +1,6 @@
 from pathlib import Path
+from functools import cache
+import math
 
 
 def part1(data):
@@ -6,29 +8,28 @@ def part1(data):
 
 
 def part2(data):
-    pass
+    return simulate(data, 75)
 
 
 def simulate(data, iterations):
-    for _ in range(iterations):
-        data = step(data)
-    return len(data)
+    return sum(count_values(stone, iterations) for stone in data)
 
 
-def step(data):
-    return [changed for stone in data for changed in change(stone)]
+@cache
+def count_values(stone, iterations):
+    if iterations == 0:
+        return 1
 
-
-def change(stone):
-    stone_str = str(stone)
-    digits = len(stone_str)
     if stone == 0:
-        yield 1
-    elif digits % 2 == 0:
-        yield int(stone_str[: digits // 2])
-        yield int(stone_str[digits // 2 :])
-    else:
-        yield stone * 2024
+        return count_values(1, iterations - 1)
+
+    digits = math.floor(math.log10(stone)) + 1
+    if digits % 2 == 0:
+        half_digits = digits // 2
+        left, right = divmod(stone, 10**half_digits)
+        return count_values(left, iterations - 1) + count_values(right, iterations - 1)
+
+    return count_values(stone * 2024, iterations - 1)
 
 
 def parse_data(input_file):
