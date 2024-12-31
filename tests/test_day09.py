@@ -12,10 +12,25 @@ def example_input():
     )
 
 
+@pytest.fixture
+def example_input2():
+    return StringIO(
+        """\
+1313165
+"""
+    )
+
+
 def test_part1(example_input):
     data = parse_data(example_input)
     assert part1(data) == 1928
 
 
 def test_part2(example_input):
-    pass
+    data = parse_data(example_input)
+    assert part2(data) == 2858
+
+
+def test_part2_alt(example_input2):
+    data = parse_data(example_input2)
+    assert part2(data) == 169

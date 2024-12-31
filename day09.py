@@ -1,17 +1,21 @@
 from pathlib import Path
 from dataclasses import dataclass
+from copy import deepcopy
 
 
 def part1(data):
-    defrag(data)
+    data = deepcopy(data)
+    defrag_blocks(data)
     return get_checksum(data)
 
 
 def part2(data):
-    pass
+    data = deepcopy(data)
+    defrag_files(data)
+    return get_checksum(data)
 
 
-def defrag(data):
+def defrag_blocks(data):
     left_ptr = 0
     right_ptr = len(data) - 1
 
@@ -43,6 +47,25 @@ def defrag(data):
             right_ptr -= 1
 
 
+def defrag_files(data):
+    right_ptr = len(data) - 1
+    while right_ptr > 0:
+        right = data[right_ptr]
+        moved = False
+        for left_ptr in range(right_ptr):
+            left = data[left_ptr]
+            space = left.space
+            if right.size and space >= right.size:
+                data[right_ptr] = Chunk(id=None, size=0, space=right.size + right.space)
+                data.insert(left_ptr + 1, right)
+                left.space = 0
+                right.space = space - right.size
+                moved = True
+                break
+        if not moved:
+            right_ptr -= 1
+
+
 def get_checksum(data):
     pos = 0
     result = 0
@@ -50,6 +73,7 @@ def get_checksum(data):
         for _ in range(left.size):
             result += left.id * pos
             pos += 1
+        pos += left.space
     return result
 
 
