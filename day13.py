@@ -1,35 +1,39 @@
 import re
+from copy import deepcopy
 from dataclasses import dataclass
-from functools import cache
 from pathlib import Path
 
 
 def part1(data):
-    return sum(solution for game in data if (solution := find_min_cost(game)) < 10_000)
+    data = deepcopy(data)
+    return sum(find_min_cost(game) for game in data)
 
 
 def part2(data):
-    pass
+    data = deepcopy(data)
+    adjust_games(data)
+    return sum(find_min_cost(game) for game in data)
+
+
+def adjust_games(data):
+    adjustment = 10000000000000
+    for game in data:
+        game.prize = (game.prize[0] + adjustment, game.prize[1] + adjustment)
 
 
 def find_min_cost(game):
-    @cache
-    def find_solution(x=0, y=0, button_a=0, button_b=0):
-        if button_a > 100:
-            return 10_000
-        if button_b > 100:
-            return 10_000
-        if (x, y) == game.prize:
-            return 0
-        press_a = 3 + find_solution(
-            x + game.button_a[0], y + game.button_a[1], button_a + 1, button_b
-        )
-        press_b = 1 + find_solution(
-            x + game.button_b[0], y + game.button_b[1], button_a, button_b + 1
-        )
-        return min(press_a, press_b)
-
-    return find_solution()
+    # Had to look up some very stong hints for this implementation 😬 (it's been
+    # too long since I studied linear algebra)
+    b_presses, b_remainder = divmod(
+        game.button_a[1] * game.prize[0] - game.button_a[0] * game.prize[1],
+        game.button_a[1] * game.button_b[0] - game.button_a[0] * game.button_b[1],
+    )
+    a_presses, a_remainder = divmod(
+        game.prize[0] - b_presses * game.button_b[0], game.button_a[0]
+    )
+    if a_remainder or b_remainder:
+        return 0
+    return a_presses * 3 + b_presses
 
 
 @dataclass
