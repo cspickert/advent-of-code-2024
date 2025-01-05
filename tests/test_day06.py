@@ -1,5 +1,7 @@
-import pytest
 from io import StringIO
+
+import pytest
+
 from day06 import parse_data, part1, part2
 
 

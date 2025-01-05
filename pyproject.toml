@@ -9,6 +9,7 @@ package-mode = false
 python = "^3.13"
 pytest = "^8.3.4"
 ruff = "^0.8.3"
+isort = "^5.13.2"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,6 +1,6 @@
-from pathlib import Path
-from dataclasses import dataclass
 from copy import deepcopy
+from dataclasses import dataclass
+from pathlib import Path
 
 
 def part1(data):

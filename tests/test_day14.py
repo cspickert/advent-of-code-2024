@@ -1,6 +1,8 @@
-import pytest
-from day14 import parse_data, part1
 from io import StringIO
+
+import pytest
+
+from day14 import parse_data, part1
 
 
 @pytest.fixture

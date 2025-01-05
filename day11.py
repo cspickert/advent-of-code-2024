@@ -1,6 +1,6 @@
-from pathlib import Path
-from functools import cache
 import math
+from functools import cache
+from pathlib import Path
 
 
 def part1(data):

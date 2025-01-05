@@ -1,6 +1,6 @@
-from pathlib import Path
 from collections import defaultdict
 from functools import cmp_to_key
+from pathlib import Path
 
 
 def part1(data):

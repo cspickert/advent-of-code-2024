@@ -1,6 +1,6 @@
-from pathlib import Path
 from dataclasses import dataclass, field, replace
 from functools import cached_property
+from pathlib import Path
 
 
 def part1(data):
