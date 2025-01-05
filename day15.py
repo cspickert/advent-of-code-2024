@@ -1,5 +1,5 @@
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from copy import deepcopy
 
 
@@ -10,14 +10,58 @@ def part1(data):
 
 
 def part2(data):
-    pass
+    data = deepcopy(data)
+    data.do_all_moves()
+    return data.get_gps_sum()
+
+
+@dataclass
+class Mapping:
+    thing_to_coords: dict[str, list[tuple[int, int]]] = field(default_factory=dict)
+    coords_to_thing: dict[tuple[int, int], str] = field(default_factory=dict)
+
+    def __contains__(self, coords):
+        return coords in self.coords_to_thing
+
+    def add(self, thing_id, all_coords):
+        self.thing_to_coords[thing_id] = all_coords
+        for coords in all_coords:
+            assert coords not in self.coords_to_thing
+            self.coords_to_thing[coords] = thing_id
+
+    def overlaps(self, other):
+        return bool(set(self.coords_to_thing) & set(other.coords_to_thing))
+
+    def move(self, from_coords, to_coords, moved=None):
+        if moved is None:
+            moved = set()
+
+        dr, dc = to_coords[0] - from_coords[0], to_coords[1] - from_coords[1]
+
+        thing = self.coords_to_thing[from_coords]
+        moved.add(thing)
+
+        src_coords = self.thing_to_coords.pop(thing)
+        for src in src_coords:
+            del self.coords_to_thing[src]
+
+        dst_coords = [(src[0] + dr, src[1] + dc) for src in src_coords]
+        for dst in dst_coords:
+            push_thing = self.coords_to_thing.get(dst)
+            if push_thing and push_thing not in moved:
+                moved.add(push_thing)
+                self.move(dst, (dst[0] + dr, dst[1] + dc), moved)
+
+        self.thing_to_coords[thing] = dst_coords
+        for dst in dst_coords:
+            self.coords_to_thing[dst] = thing
 
 
 @dataclass
 class Data:
     robot: tuple[int, int]
-    boxes: set[tuple[int, int]]
-    walls: set[tuple[int, int]]
+    boxes: Mapping
+    walls: Mapping
     moves: list[str]
 
     def do_all_moves(self):
@@ -34,24 +78,14 @@ class Data:
             self.robot = next_pos
 
     def push_box(self, box_pos):
-        # can we push the box(es)?
+        new_boxes = deepcopy(self.boxes)
+
         dr, dc = self.get_delta(box_pos)
-        pos = box_pos
-        while pos in self.boxes:
-            pos = pos[0] + dr, pos[1] + dc
-        if pos in self.walls:
-            return
-        # found empty spot
-        while pos != self.robot:
-            to_move = pos[0] - dr, pos[1] - dc
-            if to_move in self.boxes:
-                self.boxes.remove(to_move)
-                self.boxes.add(pos)
-            else:
-                assert to_move == self.robot
-                break
-            pos = to_move
-        self.robot = box_pos
+        new_boxes.move(box_pos, (box_pos[0] + dr, box_pos[1] + dc))
+
+        if not new_boxes.overlaps(self.walls):
+            self.boxes = new_boxes
+            self.robot = box_pos
 
     def get_move_pos(self, move):
         dr, dc = self.get_move_delta(move)
@@ -73,28 +107,60 @@ class Data:
         return pos[0] - self.robot[0], pos[1] - self.robot[1]
 
     def get_gps_sum(self):
-        return sum(box[0] * 100 + box[1] for box in self.boxes)
+        return sum(
+            all_coords[0][0] * 100 + all_coords[0][1]
+            for _, all_coords in self.boxes.thing_to_coords.items()
+        )
+
+    def display(self):
+        max_row = max(row for row, _ in self.walls.coords_to_thing)
+        max_col = max(col for _, col in self.walls.coords_to_thing)
+        for row in range(max_row + 1):
+            line = ""
+            for col in range(max_col + 1):
+                if (row, col) in self.walls:
+                    line += "#"
+                elif (row, col) in self.boxes:
+                    line += self.boxes.coords_to_thing[(row, col)]
+                elif (row, col) == self.robot:
+                    line += "@"
+                else:
+                    line += "."
+            print(line)
 
 
-def parse_data(input_file):
+def parse_data(input_file, part_2=False):
     data = Data(
         robot=(0, 0),
-        boxes=set(),
-        walls=set(),
+        boxes=Mapping(),
+        walls=Mapping(),
         moves=[],
     )
 
     map_str, moves_str = input_file.read().strip().split("\n\n")
 
+    wall_id = 0
+    box_id = 0
+
     for row, line in enumerate(map_str.splitlines()):
         for col, char in enumerate(line):
+            if part_2:
+                col *= 2
             match char:
                 case "@":
                     data.robot = (row, col)
                 case "#":
-                    data.walls.add((row, col))
+                    wall_id += 1
+                    wall_coords = [(row, col)]
+                    if part_2:
+                        wall_coords += [(row, col + 1)]
+                    data.walls.add(str(wall_id), wall_coords)
                 case "O":
-                    data.boxes.add((row, col))
+                    box_id += 1
+                    box_coords = [(row, col)]
+                    if part_2:
+                        box_coords += [(row, col + 1)]
+                    data.boxes.add(str(box_id), box_coords)
 
     for char in moves_str:
         if char in "<>^v":
@@ -107,4 +173,6 @@ if __name__ == "__main__":
     input_file = (Path(__file__).parent / "input" / "day15.txt").open()
     data = parse_data(input_file)
     print(part1(data))
+    input_file.seek(0)
+    data = parse_data(input_file, part_2=True)
     print(part2(data))
