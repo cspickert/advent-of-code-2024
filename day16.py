@@ -11,7 +11,55 @@ def part1(data):
     return find_min_path(data)
 
 
+def part2(data):
+    min_costs = find_min_costs(data)
+    return count_min_positions(data, min_costs)
+
+
 def find_min_path(data):
+    min_costs = find_min_costs(data)
+    return min_costs[data.start, (0, 1)]
+
+
+def count_min_positions(data, min_costs):
+    positions = {data.end}
+
+    stack = []
+    for direction in DIRECTIONS_CW:
+        stack.append((data.end, direction, []))
+
+    while stack:
+        pos, direction, path = stack.pop()
+        cost = min_costs[pos, direction]
+
+        if pos == data.start:
+            positions.update(path)
+            continue
+
+        # Try moving forward
+        next_pos = pos[0] + direction[0], pos[1] + direction[1]
+        if next_pos not in data.walls:
+            move_forward_state = (next_pos, direction)
+            move_forward_cost = 1 + cost
+            if move_forward_cost == min_costs[move_forward_state]:
+                stack.append((*move_forward_state, [*path, next_pos]))
+
+        # Try turning clockwise or counterclockwise
+        for next_direction in (
+            get_next_direction_clockwise(direction),
+            get_next_direction_counterclockwise(direction),
+        ):
+            next_pos = pos[0] + next_direction[0], pos[1] + next_direction[1]
+            if next_pos not in data.walls:
+                next_direction_state = (pos, next_direction)
+                next_direction_cost = cost + 1000
+                if next_direction_cost == min_costs[next_direction_state]:
+                    stack.append((*next_direction_state, [*path, next_pos]))
+
+    return len(positions)
+
+
+def find_min_costs(data):
     min_costs = defaultdict(lambda: math.inf)
 
     for direction in DIRECTIONS_CW:
@@ -47,7 +95,7 @@ def find_min_path(data):
                     min_costs[next_direction_state] = next_direction_cost
                     stack.append(next_direction_state)
 
-    return min_costs[data.start, (0, 1)]
+    return min_costs
 
 
 def get_next_direction_clockwise(direction):
@@ -103,3 +151,4 @@ if __name__ == "__main__":
     input_file = (Path(__file__).parent / "input" / "day16.txt").open()
     data = parse_data(input_file)
     print(part1(data))
+    print(part2(data))
